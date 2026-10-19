@@ -44,7 +44,7 @@ Kategorija turi daug įrašų, įrašas turi daug komentarų. Ištrynus kategori
 1. Nusiklonuokite repozitoriją:
 
    ```bash
-   git clone [<repozitorijos-adresas>](https://github.com/Kyborgenia-a/dndwiki)
+   git clone https://github.com/Kyborgenia-a/dndwiki
    ```
 
 2. Projekto aplanke nustatykite MySQL prisijungimo eilutę. Slaptažodis saugomas User Secrets, todėl į repozitoriją nepatenka:
