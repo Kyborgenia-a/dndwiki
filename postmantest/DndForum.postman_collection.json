@@ -1,0 +1,638 @@
+{
+  "info": {
+    "name": "D&D Forum API",
+    "description": "Visų 15 API metodų ir klaidų atvejų (400, 404, 409, 422) demonstracija. Paleisti per Collection Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:7135"
+    },
+    {
+      "key": "categoryId",
+      "value": ""
+    },
+    {
+      "key": "categoryName",
+      "value": ""
+    },
+    {
+      "key": "postId",
+      "value": ""
+    },
+    {
+      "key": "commentId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "15 API metodų",
+      "item": [
+        {
+          "name": "01 Gauti visas kategorijas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Grąžinamas masyvas', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Yra pradinės kategorijos', () => pm.expect(pm.response.json().length).to.be.at.least(4));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories"
+          }
+        },
+        {
+          "name": "02 Sukurti kategoriją",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Yra Location antraštė', () => pm.expect(pm.response.headers.get('Location')).to.be.a('string'));",
+                  "const category = pm.response.json();",
+                  "pm.collectionVariables.set('categoryId', category.id);",
+                  "pm.collectionVariables.set('categoryName', category.name);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo kategorija {{$timestamp}}\",\n  \"description\": \"Kategorija, sukurta Postman testų metu.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "03 Gauti kategoriją",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Grąžinta sukurta kategorija', () => pm.expect(pm.response.json().name).to.eql(pm.collectionVariables.get('categoryName')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "04 Atnaujinti kategoriją",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Aprašymas atnaujintas', () => pm.expect(pm.response.json().description).to.eql('Atnaujintas aprašymas.'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Demo kategorija {{$timestamp}}\",\n  \"description\": \"Atnaujintas aprašymas.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "05 Gauti kategorijos įrašus",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Grąžinamas masyvas', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts"
+          }
+        },
+        {
+          "name": "06 Sukurti įrašą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Yra Location antraštė', () => pm.expect(pm.response.headers.get('Location')).to.be.a('string'));",
+                  "pm.collectionVariables.set('postId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Barbaro klasės apžvalga\",\n  \"content\": \"Barbaras kovoje pasikliauja įniršiu (Rage), kuris suteikia papildomos žalos ir atsparumo.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "07 Gauti įrašą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Įrašas priklauso kategorijai', () => pm.expect(pm.response.json().categoryId).to.eql(Number(pm.collectionVariables.get('categoryId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}"
+          }
+        },
+        {
+          "name": "08 Atnaujinti įrašą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Pavadinimas atnaujintas', () => pm.expect(pm.response.json().title).to.eql('Barbaro klasės apžvalga (atnaujinta)'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Barbaro klasės apžvalga (atnaujinta)\",\n  \"content\": \"Barbaras kovoje pasikliauja įniršiu (Rage). Path of the Totem Warrior – populiariausia subklasė.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "09 Gauti įrašo komentarus",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Grąžinamas masyvas', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}/comments"
+          }
+        },
+        {
+          "name": "10 Sukurti komentarą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Yra Location antraštė', () => pm.expect(pm.response.headers.get('Location')).to.be.a('string'));",
+                  "pm.collectionVariables.set('commentId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Puiki apžvalga, Reckless Attack verta paminėti atskirai.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "11 Gauti komentarą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Komentaras priklauso įrašui', () => pm.expect(pm.response.json().postId).to.eql(Number(pm.collectionVariables.get('postId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}/comments/{{commentId}}"
+          }
+        },
+        {
+          "name": "12 Atnaujinti komentarą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Turinys atnaujintas', () => pm.expect(pm.response.json().content).to.include('atnaujinta'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}/comments/{{commentId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Puiki apžvalga (atnaujinta): Reckless Attack verta paminėti atskirai.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "13 Ištrinti komentarą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}/comments/{{commentId}}"
+          }
+        },
+        {
+          "name": "14 Ištrinti įrašą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}"
+          }
+        },
+        {
+          "name": "15 Ištrinti kategoriją",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Klaidų atvejai",
+      "item": [
+        {
+          "name": "404 Neegzistuojanti kategorija",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/99999"
+          }
+        },
+        {
+          "name": "404 Ištrinta kategorija",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/{{categoryId}}"
+          }
+        },
+        {
+          "name": "404 Įrašas iš kitos kategorijos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/categories/2/posts/1"
+          }
+        },
+        {
+          "name": "400 Sugadintas JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/1/posts",
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"title\": \"Trūksta kabutės, \"content\": }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "400 Neteisingas lauko tipas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/1/posts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": 123,\n  \"content\": \"Pavadinimas turi būti tekstas, ne skaičius.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "422 Netinkamos reikšmės",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Klaida laukui title', () => pm.expect(Object.keys(pm.response.json().errors).map(key => key.toLowerCase())).to.include('title'));",
+                  "pm.test('Klaida laukui content', () => pm.expect(Object.keys(pm.response.json().errors).map(key => key.toLowerCase())).to.include('content'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/1/posts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"\",\n  \"content\": \"Trumpas\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "409 Kategorijos pavadinimas užimtas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Klasės\",\n  \"description\": \"Toks pavadinimas jau yra.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
