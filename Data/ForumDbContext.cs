@@ -12,6 +12,8 @@ public class ForumDbContext : DbContext
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Post> Posts => Set<Post>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,6 +23,8 @@ public class ForumDbContext : DbContext
         ConfigureCategory(modelBuilder);
         ConfigurePost(modelBuilder);
         ConfigureComment(modelBuilder);
+        ConfigureUser(modelBuilder);
+        ConfigureUserSession(modelBuilder);
 
         ForumSeedData.Apply(modelBuilder);
     }
@@ -46,6 +50,11 @@ public class ForumDbContext : DbContext
                 .WithMany(c => c.Posts)
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            post.HasOne(p => p.Author)
+                .WithMany(u => u.Posts)
+                .HasForeignKey(p => p.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
@@ -58,6 +67,40 @@ public class ForumDbContext : DbContext
             comment.HasOne(c => c.Post)
                 .WithMany(p => p.Comments)
                 .HasForeignKey(c => c.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            comment.HasOne(c => c.Author)
+                .WithMany(u => u.Comments)
+                .HasForeignKey(c => c.AuthorId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureUser(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<User>(user =>
+        {
+            user.Property(u => u.UserName).IsRequired().HasMaxLength(User.UserNameMaxLength);
+            user.Property(u => u.Email).IsRequired().HasMaxLength(User.EmailMaxLength);
+            user.Property(u => u.PasswordHash).IsRequired();
+            user.Property(u => u.Role).IsRequired().HasMaxLength(User.RoleMaxLength);
+            user.HasIndex(u => u.UserName).IsUnique();
+            user.HasIndex(u => u.Email).IsUnique();
+        });
+    }
+
+    private static void ConfigureUserSession(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<UserSession>(session =>
+        {
+            session.Property(s => s.RefreshTokenHash)
+                .IsRequired()
+                .HasMaxLength(UserSession.RefreshTokenHashLength)
+                .IsFixedLength();
+
+            session.HasOne(s => s.User)
+                .WithMany(u => u.Sessions)
+                .HasForeignKey(s => s.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

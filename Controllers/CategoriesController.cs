@@ -1,8 +1,10 @@
+using DndForum.Auth;
 using DndForum.Data;
 using DndForum.Dtos;
 using DndForum.Hypermedia;
 using DndForum.Models;
 using DndForum.Queries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,8 +66,11 @@ public class CategoriesController : ControllerBase
     }
 
     [EndpointSummary("Sukurti kategoriją")]
-    [EndpointDescription("Sukuria naują kategoriją. Pavadinimas turi būti unikalus, kitaip grąžinamas 409.")]
+    [EndpointDescription("Tik administratoriui. Sukuria naują kategoriją. Pavadinimas turi būti unikalus, kitaip grąžinamas 409.")]
+    [Authorize(Roles = Roles.Admin)]
     [HttpPost]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(CategoryResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -90,8 +95,11 @@ public class CategoriesController : ControllerBase
     }
 
     [EndpointSummary("Atnaujinti kategoriją")]
-    [EndpointDescription("Pakeičia kategorijos pavadinimą ir aprašymą.")]
+    [EndpointDescription("Tik administratoriui. Pakeičia kategorijos pavadinimą ir aprašymą.")]
+    [Authorize(Roles = Roles.Admin)]
     [HttpPut("{categoryId:int}")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(CategoryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -118,8 +126,11 @@ public class CategoriesController : ControllerBase
     }
 
     [EndpointSummary("Ištrinti kategoriją")]
-    [EndpointDescription("Ištrina kategoriją kartu su visais jos įrašais ir komentarais.")]
+    [EndpointDescription("Tik administratoriui. Ištrina kategoriją kartu su visais jos įrašais ir komentarais.")]
+    [Authorize(Roles = Roles.Admin)]
     [HttpDelete("{categoryId:int}")]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int categoryId)

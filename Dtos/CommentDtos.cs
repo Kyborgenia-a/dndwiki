@@ -17,11 +17,14 @@ public record CommentResponse(
     string Content,
     DateTime CreatedAt,
     int PostId,
+    int AuthorId,
+    string AuthorName,
     IReadOnlyList<LinkDto> Links);
 
 public static class CommentMappings
 {
     public static CommentResponse ToResponse(this Comment comment, int categoryId, IUrlHelper url) =>
         new(comment.Id, comment.Content, comment.CreatedAt, comment.PostId,
+            comment.AuthorId, comment.Author.UserName,
             ForumLinks.ForComment(url, categoryId, comment.PostId, comment.Id));
 }

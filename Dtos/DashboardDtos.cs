@@ -22,6 +22,7 @@ public record DiscussedPost(
     string Title,
     int CategoryId,
     string CategoryName,
+    string AuthorName,
     int CommentCount,
     IReadOnlyList<LinkDto> Links);
 
@@ -29,6 +30,7 @@ public record RecentComment(
     int Id,
     string Content,
     DateTime CreatedAt,
+    string AuthorName,
     int PostId,
     string PostTitle,
     int CategoryId,

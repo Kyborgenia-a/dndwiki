@@ -97,6 +97,9 @@ namespace saitynoi.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasMaxLength(2000)
@@ -110,6 +113,8 @@ namespace saitynoi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AuthorId");
+
                     b.HasIndex("PostId");
 
                     b.ToTable("Comments");
@@ -118,6 +123,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 1,
+                            AuthorId = 4,
                             Content = "Oath of Vengeance man atrodo geriausias pasirinkimas pradedantiesiems.",
                             CreatedAt = new DateTime(2026, 9, 1, 12, 5, 0, 0, DateTimeKind.Utc),
                             PostId = 1
@@ -125,6 +131,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 2,
+                            AuthorId = 5,
                             Content = "Verta pridėti, kad Divine Smite su kritiniu smūgiu dvigubina ir smite kauliukus.",
                             CreatedAt = new DateTime(2026, 9, 2, 8, 40, 0, 0, DateTimeKind.Utc),
                             PostId = 1
@@ -132,6 +139,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 3,
+                            AuthorId = 3,
                             Content = "Shield burtas mano vedlį išgelbėjo ne vieną kartą.",
                             CreatedAt = new DateTime(2026, 9, 4, 19, 10, 0, 0, DateTimeKind.Utc),
                             PostId = 2
@@ -139,6 +147,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 4,
+                            AuthorId = 3,
                             Content = "Ar šiam apsiaustui reikia attunement?",
                             CreatedAt = new DateTime(2026, 9, 11, 7, 20, 0, 0, DateTimeKind.Utc),
                             PostId = 4
@@ -146,6 +155,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 5,
+                            AuthorId = 5,
                             Content = "Taip, reikia. Pridėsiu tai į aprašymą.",
                             CreatedAt = new DateTime(2026, 9, 11, 9, 0, 0, 0, DateTimeKind.Utc),
                             PostId = 4
@@ -153,6 +163,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 6,
+                            AuthorId = 4,
                             Content = "Mes pridedame priešų bangomis, ir kovos vėl tampa įdomios.",
                             CreatedAt = new DateTime(2026, 9, 13, 21, 30, 0, 0, DateTimeKind.Utc),
                             PostId = 5
@@ -160,6 +171,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 7,
+                            AuthorId = 5,
                             Content = "Find Familiar pelėda dar gali duoti Help veiksmą ir nusiskristi neišprovokuodama atakos.",
                             CreatedAt = new DateTime(2026, 9, 5, 10, 15, 0, 0, DateTimeKind.Utc),
                             PostId = 2
@@ -167,6 +179,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 8,
+                            AuthorId = 3,
                             Content = "Mano tiefling warlock su Hellish Rebuke jau ne kartą nustebino DM.",
                             CreatedAt = new DateTime(2026, 9, 6, 17, 45, 0, 0, DateTimeKind.Utc),
                             PostId = 3
@@ -174,6 +187,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 9,
+                            AuthorId = 4,
                             Content = "Mountain dwarf gauna vidutinių šarvų įgūdį, todėl tinka net wizard klasei.",
                             CreatedAt = new DateTime(2026, 9, 16, 11, 0, 0, 0, DateTimeKind.Utc),
                             PostId = 6
@@ -181,6 +195,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 10,
+                            AuthorId = 5,
                             Content = "Išbandėme vakar: rūkas tikrai pakeitė kovos taktiką, labai patiko.",
                             CreatedAt = new DateTime(2026, 9, 20, 22, 5, 0, 0, DateTimeKind.Utc),
                             PostId = 7
@@ -188,6 +203,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 11,
+                            AuthorId = 4,
                             Content = "Siūlyčiau gyvatėms sumažinti gyvybes, kitaip kova užsitęsia.",
                             CreatedAt = new DateTime(2026, 9, 21, 8, 30, 0, 0, DateTimeKind.Utc),
                             PostId = 7
@@ -195,6 +211,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 12,
+                            AuthorId = 3,
                             Content = "Socialinis susitikimas taverne – klasika, kuri visada veikia.",
                             CreatedAt = new DateTime(2026, 9, 23, 13, 50, 0, 0, DateTimeKind.Utc),
                             PostId = 8
@@ -202,6 +219,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 13,
+                            AuthorId = 5,
                             Content = "Prieš kiekvieną Fireball klausiu grupės, ar visi stovi už spindulio ribų.",
                             CreatedAt = new DateTime(2026, 9, 26, 9, 25, 0, 0, DateTimeKind.Utc),
                             PostId = 9
@@ -209,6 +227,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 14,
+                            AuthorId = 2,
                             Content = "Verta paminėti, kad aukštesnio lygio vieta prideda po 1d6 žalos.",
                             CreatedAt = new DateTime(2026, 9, 27, 15, 0, 0, 0, DateTimeKind.Utc),
                             PostId = 9
@@ -216,6 +235,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 15,
+                            AuthorId = 4,
                             Content = "War Caster feat labai padeda išlaikyti koncentraciją kovoje.",
                             CreatedAt = new DateTime(2026, 9, 29, 18, 35, 0, 0, DateTimeKind.Utc),
                             PostId = 10
@@ -229,6 +249,9 @@ namespace saitynoi.Migrations
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AuthorId")
+                        .HasColumnType("int");
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
@@ -248,6 +271,8 @@ namespace saitynoi.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AuthorId");
+
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Posts");
@@ -256,6 +281,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 1,
+                            AuthorId = 3,
                             CategoryId = 1,
                             Content = "Paladinas – šventas karys, derinantis kovą artimu atstumu su dieviška magija. Svarbiausios savybės yra Strength ir Charisma. Divine Smite leidžia paversti burtų vietas papildoma radiant žala.",
                             CreatedAt = new DateTime(2026, 9, 1, 10, 0, 0, 0, DateTimeKind.Utc),
@@ -264,6 +290,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 2,
+                            AuthorId = 4,
                             CategoryId = 1,
                             Content = "Pirmuose lygiuose vedlys turi mažai gyvybių, todėl laikykitės atokiau nuo priešų. Rinkitės Shield ir Mage Armor, o Find Familiar padės žvalgyti nerizikuojant savimi.",
                             CreatedAt = new DateTime(2026, 9, 3, 18, 30, 0, 0, DateTimeKind.Utc),
@@ -272,6 +299,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 3,
+                            AuthorId = 4,
                             CategoryId = 2,
                             Content = "Tieflingai turi pragariškos kilmės kraujo. Jie atsparūs ugnies žalai ir paveldi įgimtus burtus, pavyzdžiui, Hellish Rebuke. Puikiai tinka Warlock ar Sorcerer klasėms.",
                             CreatedAt = new DateTime(2026, 9, 5, 14, 15, 0, 0, DateTimeKind.Utc),
@@ -280,6 +308,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 4,
+                            AuthorId = 5,
                             CategoryId = 3,
                             Content = "Retas magiškas daiktas. Kartą per ilgą poilsį nešiotojas gali tapti nematomas iki 1 minutės, jei stovi silpnoje šviesoje arba tamsoje. Puikiai tinka Rogue personažams.",
                             CreatedAt = new DateTime(2026, 9, 10, 20, 0, 0, 0, DateTimeKind.Utc),
@@ -288,6 +317,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 5,
+                            AuthorId = 2,
                             CategoryId = 4,
                             Content = "Jei grupė lengvai įveikia kovas, didinkite ne priešų gyvybes, o jų skaičių ir taktiką. Naudokite aplinką, laiko spaudimą ir tikslus, kurie nėra vien priešų nugalėjimas.",
                             CreatedAt = new DateTime(2026, 9, 12, 9, 45, 0, 0, DateTimeKind.Utc),
@@ -296,6 +326,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 6,
+                            AuthorId = 5,
                             CategoryId = 2,
                             Content = "Nykštukai mato tamsoje (Darkvision), yra atsparūs nuodams ir puikiai išmano akmens darbus. Dėl tvirtumo jie natūraliai tinka Fighter, Cleric ir Paladin klasėms.",
                             CreatedAt = new DateTime(2026, 9, 15, 16, 20, 0, 0, DateTimeKind.Utc),
@@ -304,6 +335,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 7,
+                            AuthorId = 3,
                             CategoryId = 3,
                             Content = "Challenge Rating 4 priešininkė, gyvenanti pelkėse. Ji gali sukurti rūką, kuris riboja matomumą, ir prisikviesti dvi pelkių gyvates. Tinka 3–4 lygio grupei kaip sesijos finalas.",
                             CreatedAt = new DateTime(2026, 9, 18, 21, 10, 0, 0, DateTimeKind.Utc),
@@ -312,6 +344,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 8,
+                            AuthorId = 1,
                             CategoryId = 4,
                             Content = "Užtenka trijų dalykų: aiškaus nuotykio kabliuko, vienos kovos ir vieno socialinio susitikimo. Nerašykite viso scenarijaus – leiskite žaidėjų sprendimams nulemti eigą.",
                             CreatedAt = new DateTime(2026, 9, 22, 8, 0, 0, 0, DateTimeKind.Utc),
@@ -320,6 +353,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 9,
+                            AuthorId = 4,
                             CategoryId = 5,
                             Content = "Fireball yra 3 lygio burtas, darantis 8d6 ugnies žalos 20 pėdų spinduliu. Jis puikus prieš priešų grupes, bet uždarose patalpose lengva užkabinti ir savo sąjungininkus.",
                             CreatedAt = new DateTime(2026, 9, 25, 19, 40, 0, 0, DateTimeKind.Utc),
@@ -328,6 +362,7 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 10,
+                            AuthorId = 2,
                             CategoryId = 5,
                             Content = "Vienu metu galima palaikyti tik vieną Concentration burtą. Gavęs žalos, burtininkas meta Constitution gelbėjimo metimą: sudėtingumas yra 10 arba pusė gautos žalos, jei ji didesnė.",
                             CreatedAt = new DateTime(2026, 9, 28, 12, 5, 0, 0, DateTimeKind.Utc),
@@ -335,26 +370,172 @@ namespace saitynoi.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DndForum.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("varchar(254)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("UserName")
+                        .IsUnique();
+
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 8, 15, 9, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "admin@dndforum.test",
+                            PasswordHash = "AQAAAAIAAYagAAAAEA+4iFavXvb672kYZBCwgBzfIUfDPQDfu9w6ckdTVwl8uwqJ+rJBAJlPWkl+AUvX8g==",
+                            Role = "Admin",
+                            UserName = "admin"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2026, 8, 16, 10, 30, 0, 0, DateTimeKind.Utc),
+                            Email = "moderatorius@dndforum.test",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGdO0WcmKpKS3YWHj64eKnnB1eaMnnmDVhD7PLwWayzRZo3P+2Guithu33/QSGMAmQ==",
+                            Role = "Moderator",
+                            UserName = "moderatorius"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2026, 8, 18, 19, 45, 0, 0, DateTimeKind.Utc),
+                            Email = "drakonai@dndforum.test",
+                            PasswordHash = "AQAAAAIAAYagAAAAENEOy6xjtBp7C1rcvp0pyq330fFX6YcGjeSZjtGNbOlbGon9hyFfZluy+5kDVKz15w==",
+                            Role = "Member",
+                            UserName = "drakonu_medziotojas"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CreatedAt = new DateTime(2026, 8, 19, 12, 10, 0, 0, DateTimeKind.Utc),
+                            Email = "ieva@dndforum.test",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFLG4qlepnkFjYNlHPRozvdSNdTwe6hD78P6pHCS4XgQnD7r4Gg7Zdjss4XXWUJKCw==",
+                            Role = "Member",
+                            UserName = "burtininke_ieva"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CreatedAt = new DateTime(2026, 8, 20, 8, 25, 0, 0, DateTimeKind.Utc),
+                            Email = "tomas@dndforum.test",
+                            PasswordHash = "AQAAAAIAAYagAAAAEAF2GSVnPfVbIhFnHFEKUNedG+ePu+2FpTzdWE7TzEDicZRU+WlprDREJS6Xs83Pog==",
+                            Role = "Member",
+                            UserName = "nykstukas_tomas"
+                        });
+                });
+
+            modelBuilder.Entity("DndForum.Models.UserSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("RefreshTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("char(64)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserSessions");
+                });
+
             modelBuilder.Entity("DndForum.Models.Comment", b =>
                 {
+                    b.HasOne("DndForum.Models.User", "Author")
+                        .WithMany("Comments")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("DndForum.Models.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Author");
+
                     b.Navigation("Post");
                 });
 
             modelBuilder.Entity("DndForum.Models.Post", b =>
                 {
+                    b.HasOne("DndForum.Models.User", "Author")
+                        .WithMany("Posts")
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("DndForum.Models.Category", "Category")
                         .WithMany("Posts")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Author");
+
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("DndForum.Models.UserSession", b =>
+                {
+                    b.HasOne("DndForum.Models.User", "User")
+                        .WithMany("Sessions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("DndForum.Models.Category", b =>
@@ -365,6 +546,15 @@ namespace saitynoi.Migrations
             modelBuilder.Entity("DndForum.Models.Post", b =>
                 {
                     b.Navigation("Comments");
+                });
+
+            modelBuilder.Entity("DndForum.Models.User", b =>
+                {
+                    b.Navigation("Comments");
+
+                    b.Navigation("Posts");
+
+                    b.Navigation("Sessions");
                 });
 #pragma warning restore 612, 618
         }

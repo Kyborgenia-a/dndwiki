@@ -1,6 +1,7 @@
 using DndForum.Data;
 using DndForum.Dtos;
 using DndForum.Hypermedia;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace DndForum.Controllers;
 [ApiController]
 [Route("api/dashboard")]
 [Produces("application/json")]
+[Authorize]
 public class DashboardController : ControllerBase
 {
     private const int TopListSize = 5;
@@ -21,9 +23,10 @@ public class DashboardController : ControllerBase
     }
 
     [EndpointSummary("Gauti forumo panelę")]
-    [EndpointDescription("Forumo apžvalga, sudaryta iš kategorijų, įrašų ir komentarų: bendri skaičiai, kiekvienos kategorijos aktyvumas, labiausiai komentuojami įrašai ir naujausi komentarai.")]
+    [EndpointDescription("Prisijungusiam naudotojui. Forumo apžvalga, sudaryta iš kategorijų, įrašų, komentarų ir naudotojų: bendri skaičiai, kiekvienos kategorijos aktyvumas, labiausiai komentuojami įrašai ir naujausi komentarai.")]
     [HttpGet]
     [ProducesResponseType(typeof(DashboardResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<DashboardResponse>> Get()
     {
         var totals = new DashboardTotals(
@@ -90,6 +93,7 @@ public class DashboardController : ControllerBase
                 post.Title,
                 post.CategoryId,
                 CategoryName = post.Category.Name,
+                AuthorName = post.Author.UserName,
                 CommentCount = post.Comments.Count
             })
             .ToListAsync();
@@ -100,6 +104,7 @@ public class DashboardController : ControllerBase
                 post.Title,
                 post.CategoryId,
                 post.CategoryName,
+                post.AuthorName,
                 post.CommentCount,
                 [ForumLinks.PostSelf(Url, post.CategoryId, post.Id)]))
             .ToList();
@@ -116,6 +121,7 @@ public class DashboardController : ControllerBase
                 comment.Id,
                 comment.Content,
                 comment.CreatedAt,
+                AuthorName = comment.Author.UserName,
                 comment.PostId,
                 PostTitle = comment.Post.Title,
                 comment.Post.CategoryId,
@@ -128,6 +134,7 @@ public class DashboardController : ControllerBase
                 comment.Id,
                 comment.Content,
                 comment.CreatedAt,
+                comment.AuthorName,
                 comment.PostId,
                 comment.PostTitle,
                 comment.CategoryId,

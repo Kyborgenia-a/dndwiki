@@ -1,6 +1,6 @@
 namespace DndForum.Models;
 
-public class Post
+public class Post : IAuthoredContent
 {
     public const int TitleMaxLength = 200;
     public const int ContentMaxLength = 10000;
@@ -12,6 +12,9 @@ public class Post
 
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
+
+    public int AuthorId { get; set; }
+    public User Author { get; set; } = null!;
 
     public List<Comment> Comments { get; set; } = new();
 }

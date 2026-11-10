@@ -1,13 +1,65 @@
 {
   "info": {
-    "name": "D&D Forum API",
-    "description": "Visų 15 CRUD metodų, puslapiavimo, filtravimo, hypermedia, panelės ir klaidų atvejų (400, 404, 409, 422) testai. Paleisti per Collection Runner.",
+    "name": "D&D Forum API (lab2)",
+    "description": "JWT autentifikacija ir autorizacija: registracija, prisijungimas, refresh rotacija, atsijungimas, 3 rolės, savininko patikra, 15 CRUD metodų ir klaidų atvejai. Paleisti per Collection Runner nuo pradžios iki galo.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
       "value": "https://localhost:7135"
+    },
+    {
+      "key": "adminUserName",
+      "value": "admin"
+    },
+    {
+      "key": "adminPassword",
+      "value": "Admin123!"
+    },
+    {
+      "key": "moderatorUserName",
+      "value": "moderatorius"
+    },
+    {
+      "key": "moderatorPassword",
+      "value": "Moder123!"
+    },
+    {
+      "key": "memberPassword",
+      "value": "Narys123!"
+    },
+    {
+      "key": "forgedToken",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwicm9sZSI6IkFkbWluIiwic2lkIjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIn0.bmV0aWtyYXMtcGFyYXNhcw"
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "moderatorToken",
+      "value": ""
+    },
+    {
+      "key": "memberToken",
+      "value": ""
+    },
+    {
+      "key": "adminId",
+      "value": ""
+    },
+    {
+      "key": "memberId",
+      "value": ""
+    },
+    {
+      "key": "memberUserName",
+      "value": ""
+    },
+    {
+      "key": "escalationUserId",
+      "value": ""
     },
     {
       "key": "categoryId",
@@ -24,14 +76,429 @@
     {
       "key": "commentId",
       "value": ""
+    },
+    {
+      "key": "moderatedPostId",
+      "value": ""
     }
   ],
   "item": [
     {
-      "name": "1. 15 API metodų",
+      "name": "1. Autentifikacija",
       "item": [
         {
-          "name": "01 Gauti kategorijų sąrašą",
+          "name": "Registracija",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Yra Location antraštė', () => pm.expect(pm.response.headers.get('Location')).to.be.a('string'));",
+                  "const user = pm.response.json();",
+                  "pm.test('Naujam naudotojui suteikta Member rolė', () => pm.expect(user.role).to.eql('Member'));",
+                  "pm.test('Slaptažodis negrąžinamas', () => { pm.expect(user).to.not.have.property('password'); pm.expect(user).to.not.have.property('passwordHash'); });",
+                  "pm.collectionVariables.set('memberId', user.id);",
+                  "pm.collectionVariables.set('memberUserName', user.userName);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"zaidejas_{{$timestamp}}\",\n  \"email\": \"zaidejas_{{$timestamp}}@dndforum.test\",\n  \"password\": \"{{memberPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registracija bandant suteikti sau Admin rolę",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Rolės laukas ignoruojamas – vis tiek Member', () => pm.expect(pm.response.json().role).to.eql('Member'));",
+                  "pm.collectionVariables.set('escalationUserId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"isilauzelis_{{$timestamp}}\",\n  \"email\": \"isilauzelis_{{$timestamp}}@dndforum.test\",\n  \"password\": \"{{memberPassword}}\",\n  \"role\": \"Admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registracija su užimtu vardu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"admin\",\n  \"email\": \"kitas_{{$timestamp}}@dndforum.test\",\n  \"password\": \"{{memberPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registracija su netinkamais duomenimis",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Klaida laukui userName', () => pm.expect(Object.keys(pm.response.json().errors).map(key => key.toLowerCase()).join(' ')).to.include('username'));",
+                  "pm.test('Klaida laukui email', () => pm.expect(Object.keys(pm.response.json().errors).map(key => key.toLowerCase()).join(' ')).to.include('email'));",
+                  "pm.test('Klaida laukui password', () => pm.expect(Object.keys(pm.response.json().errors).map(key => key.toLowerCase()).join(' ')).to.include('password'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"a\",\n  \"email\": \"ne-pastas\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Prisijungimas su blogu slaptažodžiu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"{{adminUserName}}\",\n  \"password\": \"neteisingas123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Prisijungimas: administratorius",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Refresh token cookie: HttpOnly, Secure, SameSite=Strict', () => { const cookie = (pm.response.headers.get('Set-Cookie') || '').toLowerCase(); pm.expect(cookie).to.include('refreshtoken='); pm.expect(cookie).to.include('httponly'); pm.expect(cookie).to.include('secure'); pm.expect(cookie).to.include('samesite=strict'); });",
+                  "pm.test('Refresh token negrąžinamas atsakymo turinyje', () => pm.expect(pm.response.json()).to.not.have.property('refreshToken'));",
+                  "const decodeJwt = token => { let part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); while (part.length % 4) { part += '='; } return JSON.parse(decodeURIComponent(escape(atob(part)))); };",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('adminToken', body.accessToken);",
+                  "const claims = decodeJwt(body.accessToken);",
+                  "pm.test('Tokene yra rolė Admin', () => pm.expect(claims.role).to.eql('Admin'));",
+                  "pm.test('Tokene yra naudotojo ID ir sesija', () => { pm.expect(claims.sub).to.eql(String(body.user.id)); pm.expect(claims.sid).to.be.a('string'); });",
+                  "pm.test('Access token galioja trumpai (≤ 15 min.)', () => pm.expect(claims.exp - claims.iat).to.be.at.most(15 * 60));",
+                  "pm.collectionVariables.set('adminId', body.user.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"{{adminUserName}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Prisijungimas: moderatorius",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Refresh token cookie: HttpOnly, Secure, SameSite=Strict', () => { const cookie = (pm.response.headers.get('Set-Cookie') || '').toLowerCase(); pm.expect(cookie).to.include('refreshtoken='); pm.expect(cookie).to.include('httponly'); pm.expect(cookie).to.include('secure'); pm.expect(cookie).to.include('samesite=strict'); });",
+                  "pm.test('Refresh token negrąžinamas atsakymo turinyje', () => pm.expect(pm.response.json()).to.not.have.property('refreshToken'));",
+                  "const decodeJwt = token => { let part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); while (part.length % 4) { part += '='; } return JSON.parse(decodeURIComponent(escape(atob(part)))); };",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('moderatorToken', body.accessToken);",
+                  "const claims = decodeJwt(body.accessToken);",
+                  "pm.test('Tokene yra rolė Moderator', () => pm.expect(claims.role).to.eql('Moderator'));",
+                  "pm.test('Tokene yra naudotojo ID ir sesija', () => { pm.expect(claims.sub).to.eql(String(body.user.id)); pm.expect(claims.sid).to.be.a('string'); });",
+                  "pm.test('Access token galioja trumpai (≤ 15 min.)', () => pm.expect(claims.exp - claims.iat).to.be.at.most(15 * 60));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"{{moderatorUserName}}\",\n  \"password\": \"{{moderatorPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Prisijungimas: naujas narys",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Refresh token cookie: HttpOnly, Secure, SameSite=Strict', () => { const cookie = (pm.response.headers.get('Set-Cookie') || '').toLowerCase(); pm.expect(cookie).to.include('refreshtoken='); pm.expect(cookie).to.include('httponly'); pm.expect(cookie).to.include('secure'); pm.expect(cookie).to.include('samesite=strict'); });",
+                  "pm.test('Refresh token negrąžinamas atsakymo turinyje', () => pm.expect(pm.response.json()).to.not.have.property('refreshToken'));",
+                  "const decodeJwt = token => { let part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); while (part.length % 4) { part += '='; } return JSON.parse(decodeURIComponent(escape(atob(part)))); };",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('memberToken', body.accessToken);",
+                  "const claims = decodeJwt(body.accessToken);",
+                  "pm.test('Tokene yra rolė Member', () => pm.expect(claims.role).to.eql('Member'));",
+                  "pm.test('Tokene yra naudotojo ID ir sesija', () => { pm.expect(claims.sub).to.eql(String(body.user.id)); pm.expect(claims.sid).to.be.a('string'); });",
+                  "pm.test('Access token galioja trumpai (≤ 15 min.)', () => pm.expect(claims.exp - claims.iat).to.be.at.most(15 * 60));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userName\": \"{{memberUserName}}\",\n  \"password\": \"{{memberPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Prisijungusio naudotojo duomenys",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Grąžintas prisijungęs naudotojas', () => pm.expect(pm.response.json().userName).to.eql(pm.collectionVariables.get('memberUserName')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Duomenys be tokeno",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Duomenys su suklastotu Admin tokenu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{forgedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Tokenų atnaujinimas (refresh)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
+                  "pm.test('Refresh token cookie: HttpOnly, Secure, SameSite=Strict', () => { const cookie = (pm.response.headers.get('Set-Cookie') || '').toLowerCase(); pm.expect(cookie).to.include('refreshtoken='); pm.expect(cookie).to.include('httponly'); pm.expect(cookie).to.include('secure'); pm.expect(cookie).to.include('samesite=strict'); });",
+                  "const decodeJwt = token => { let part = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); while (part.length % 4) { part += '='; } return JSON.parse(decodeURIComponent(escape(atob(part)))); };",
+                  "const body = pm.response.json();",
+                  "const previousToken = pm.collectionVariables.get('memberToken');",
+                  "pm.test('Išduotas naujas access token', () => pm.expect(body.accessToken).to.not.eql(previousToken));",
+                  "pm.test('Ta pati sesija', () => pm.expect(decodeJwt(body.accessToken).sid).to.eql(decodeJwt(previousToken).sid));",
+                  "pm.collectionVariables.set('memberToken', body.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/refresh"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. 15 API metodų",
+      "item": [
+        {
+          "name": "01 Gauti kategorijų sąrašą (viešas)",
           "event": [
             {
               "listen": "test",
@@ -53,7 +520,7 @@
           }
         },
         {
-          "name": "02 Sukurti kategoriją",
+          "name": "02 Sukurti kategoriją (admin)",
           "event": [
             {
               "listen": "test",
@@ -74,6 +541,10 @@
             "method": "POST",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -91,7 +562,7 @@
           }
         },
         {
-          "name": "03 Gauti kategoriją",
+          "name": "03 Gauti kategoriją (viešas)",
           "event": [
             {
               "listen": "test",
@@ -113,7 +584,7 @@
           }
         },
         {
-          "name": "04 Atnaujinti kategoriją",
+          "name": "04 Atnaujinti kategoriją (admin)",
           "event": [
             {
               "listen": "test",
@@ -130,6 +601,10 @@
           "request": {
             "method": "PUT",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -148,7 +623,7 @@
           }
         },
         {
-          "name": "05 Gauti kategorijos įrašus",
+          "name": "05 Gauti kategorijos įrašus (viešas)",
           "event": [
             {
               "listen": "test",
@@ -169,7 +644,7 @@
           }
         },
         {
-          "name": "06 Sukurti įrašą",
+          "name": "06 Sukurti įrašą (narys)",
           "event": [
             {
               "listen": "test",
@@ -179,7 +654,9 @@
                   "pm.test('Statusas 201 Created', () => pm.response.to.have.status(201));",
                   "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
                   "pm.test('Yra Location antraštė', () => pm.expect(pm.response.headers.get('Location')).to.be.a('string'));",
-                  "pm.collectionVariables.set('postId', pm.response.json().id);"
+                  "const post = pm.response.json();",
+                  "pm.test('Autorius nustatytas pagal tokeną', () => pm.expect(post.authorId).to.eql(Number(pm.collectionVariables.get('memberId'))));",
+                  "pm.collectionVariables.set('postId', post.id);"
                 ]
               }
             }
@@ -187,6 +664,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -205,7 +686,7 @@
           }
         },
         {
-          "name": "07 Gauti įrašą",
+          "name": "07 Gauti įrašą (viešas)",
           "event": [
             {
               "listen": "test",
@@ -214,7 +695,7 @@
                 "exec": [
                   "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
                   "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
-                  "pm.test('Įrašas priklauso kategorijai', () => pm.expect(pm.response.json().categoryId).to.eql(Number(pm.collectionVariables.get('categoryId'))));",
+                  "pm.test('Rodomas autoriaus vardas', () => pm.expect(pm.response.json().authorName).to.eql(pm.collectionVariables.get('memberUserName')));",
                   "pm.test('Hypermedia nuorodos: self, category, comments, create-comment', () => pm.expect(pm.response.json().links.map(l => l.rel)).to.include.members(['self', 'category', 'comments', 'create-comment']));"
                 ]
               }
@@ -227,7 +708,7 @@
           }
         },
         {
-          "name": "08 Atnaujinti įrašą",
+          "name": "08 Atnaujinti savo įrašą (narys)",
           "event": [
             {
               "listen": "test",
@@ -244,6 +725,10 @@
           "request": {
             "method": "PUT",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -262,7 +747,7 @@
           }
         },
         {
-          "name": "09 Gauti įrašo komentarus",
+          "name": "09 Gauti įrašo komentarus (viešas)",
           "event": [
             {
               "listen": "test",
@@ -283,7 +768,7 @@
           }
         },
         {
-          "name": "10 Sukurti komentarą",
+          "name": "10 Sukurti komentarą (narys)",
           "event": [
             {
               "listen": "test",
@@ -302,6 +787,10 @@
             "method": "POST",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -319,7 +808,7 @@
           }
         },
         {
-          "name": "11 Gauti komentarą",
+          "name": "11 Gauti komentarą (viešas)",
           "event": [
             {
               "listen": "test",
@@ -341,7 +830,7 @@
           }
         },
         {
-          "name": "12 Atnaujinti komentarą",
+          "name": "12 Atnaujinti savo komentarą (narys)",
           "event": [
             {
               "listen": "test",
@@ -358,6 +847,10 @@
           "request": {
             "method": "PUT",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -376,7 +869,7 @@
           }
         },
         {
-          "name": "13 Ištrinti komentarą",
+          "name": "13 Ištrinti savo komentarą (narys)",
           "event": [
             {
               "listen": "test",
@@ -391,12 +884,17 @@
           ],
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}/comments/{{commentId}}"
           }
         },
         {
-          "name": "14 Ištrinti įrašą",
+          "name": "14 Ištrinti savo įrašą (narys)",
           "event": [
             {
               "listen": "test",
@@ -411,12 +909,17 @@
           ],
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/categories/{{categoryId}}/posts/{{postId}}"
           }
         },
         {
-          "name": "15 Ištrinti kategoriją",
+          "name": "15 Ištrinti kategoriją (admin)",
           "event": [
             {
               "listen": "test",
@@ -431,14 +934,19 @@
           ],
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/categories/{{categoryId}}"
           }
         }
       ]
     },
     {
-      "name": "2. Puslapiavimas, filtrai, hypermedia, panelė",
+      "name": "3. Puslapiavimas, filtrai, hypermedia, panelė",
       "item": [
         {
           "name": "Puslapiavimas: 1 puslapis po 1 įrašą",
@@ -521,7 +1029,7 @@
                   "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
                   "pm.test('Grąžinamas puslapis su items ir links', () => { const body = pm.response.json(); pm.expect(body.items).to.be.an('array'); pm.expect(body.totalCount).to.be.a('number'); pm.expect(body.links.map(l => l.rel)).to.include('self'); });",
                   "const items = pm.response.json().items;",
-                  "pm.test('Rasta bent vienas įrašas', () => pm.expect(items.length).to.be.at.least(1));",
+                  "pm.test('Rastas bent vienas įrašas', () => pm.expect(items.length).to.be.at.least(1));",
                   "pm.test('Visi sukurti po nurodytos datos', () => items.forEach(p => pm.expect(p.createdAt >= '2026-09-02').to.be.true));",
                   "pm.test('Filtras išlieka nuorodose', () => pm.expect(pm.response.json().links[0].href).to.include('createdFrom'));"
                 ]
@@ -535,7 +1043,7 @@
           }
         },
         {
-          "name": "Panelė (dashboard)",
+          "name": "Panelė (prisijungusiam)",
           "event": [
             {
               "listen": "test",
@@ -547,15 +1055,20 @@
                   "const body = pm.response.json();",
                   "pm.test('Bendri skaičiai', () => { pm.expect(body.totals.categories).to.be.at.least(5); pm.expect(body.totals.posts).to.be.at.least(5); pm.expect(body.totals.comments).to.be.at.least(5); });",
                   "pm.test('Kategorijų aktyvumas', () => pm.expect(body.categories[0]).to.include.keys('postCount', 'commentCount', 'latestPostAt'));",
-                  "pm.test('Komentuojamiausi įrašai su kategorijos pavadinimu', () => pm.expect(body.mostDiscussedPosts[0]).to.include.keys('categoryName', 'commentCount'));",
-                  "pm.test('Naujausi komentarai su įrašo pavadinimu', () => pm.expect(body.latestComments[0]).to.include.keys('postTitle', 'categoryName'));"
+                  "pm.test('Komentuojamiausi įrašai su kategorija ir autoriumi', () => pm.expect(body.mostDiscussedPosts[0]).to.include.keys('categoryName', 'authorName', 'commentCount'));",
+                  "pm.test('Naujausi komentarai su įrašu ir autoriumi', () => pm.expect(body.latestComments[0]).to.include.keys('postTitle', 'categoryName', 'authorName'));"
                 ]
               }
             }
           ],
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/dashboard"
           }
         },
@@ -569,7 +1082,7 @@
                 "exec": [
                   "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
                   "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));",
-                  "pm.test('Hypermedia nuorodos: categories, dashboard', () => pm.expect(pm.response.json().links.map(l => l.rel)).to.include.members(['categories', 'dashboard']));"
+                  "pm.test('Hypermedia nuorodos: categories, dashboard, register, login, refresh', () => pm.expect(pm.response.json().links.map(l => l.rel)).to.include.members(['categories', 'dashboard', 'register', 'login', 'refresh']));"
                 ]
               }
             }
@@ -583,7 +1096,451 @@
       ]
     },
     {
-      "name": "3. Klaidų atvejai",
+      "name": "4. Autorizacija pagal rolę ir autorių",
+      "item": [
+        {
+          "name": "Kategorijos kūrimas be tokeno",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Neturėtų būti sukurta\",\n  \"description\": \"Svečias negali kurti kategorijų.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Kategorijos kūrimas nariu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Neturėtų būti sukurta\",\n  \"description\": \"Narys negali kurti kategorijų.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Kategorijos kūrimas moderatoriumi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{moderatorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Neturėtų būti sukurta\",\n  \"description\": \"Moderatorius negali kurti kategorijų.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Įrašo kūrimas be tokeno",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/1/posts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Svečio įrašas\",\n  \"content\": \"Svečias negali kurti įrašų forume.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Svetimo įrašo redagavimas nariu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/1/posts/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Pakeistas svetimas įrašas\",\n  \"content\": \"Narys neturi teisės keisti kito naudotojo įrašo.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Svetimo įrašo trynimas nariu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/1/posts/1"
+          }
+        },
+        {
+          "name": "Svetimo komentaro redagavimas nariu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/1/posts/1/comments/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Narys neturi teisės keisti kito naudotojo komentaro.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Svetimo komentaro trynimas nariu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/1/posts/1/comments/1"
+          }
+        },
+        {
+          "name": "Narys sukuria įrašą moderavimui",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('moderatedPostId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/4/posts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Įrašas, kurį moderuos moderatorius\",\n  \"content\": \"Šį įrašą moderatorius pataisys ir ištrins.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Moderatorius redaguoja nario įrašą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Autorius nepasikeitė', () => pm.expect(pm.response.json().authorId).to.eql(Number(pm.collectionVariables.get('memberId'))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{moderatorToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/4/posts/{{moderatedPostId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Įrašas (pataisė moderatorius)\",\n  \"content\": \"Moderatorius gali taisyti bet kurio naudotojo įrašą.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Moderatorius ištrina nario įrašą",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{moderatorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/categories/4/posts/{{moderatedPostId}}"
+          }
+        },
+        {
+          "name": "Naudotojų sąrašas nariu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users"
+          }
+        },
+        {
+          "name": "Naudotojų sąrašas moderatoriumi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{moderatorToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users"
+          }
+        },
+        {
+          "name": "Naudotojų sąrašas administratoriumi",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Grąžinamas puslapis su items ir links', () => { const body = pm.response.json(); pm.expect(body.items).to.be.an('array'); pm.expect(body.totalCount).to.be.a('number'); pm.expect(body.links.map(l => l.rel)).to.include('self'); });",
+                  "pm.test('Slaptažodžių hash negrąžinami', () => pm.response.json().items.forEach(u => pm.expect(u).to.not.have.property('passwordHash')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Klaidų atvejai",
       "item": [
         {
           "name": "404 Neegzistuojanti kategorija",
@@ -680,6 +1637,10 @@
             "method": "POST",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -713,6 +1674,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -749,6 +1714,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -807,6 +1776,44 @@
           }
         },
         {
+          "name": "422 Neegzistuojanti rolė",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 422 Unprocessable Entity', () => pm.response.to.have.status(422));",
+                  "pm.test('Klaida laukui role', () => pm.expect(Object.keys(pm.response.json().errors).map(key => key.toLowerCase()).join(' ')).to.include('role'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{memberId}}/role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"SuperAdmin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
           "name": "409 Kategorijos pavadinimas užimtas",
           "event": [
             {
@@ -824,6 +1831,10 @@
             "method": "POST",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -838,6 +1849,254 @@
                 }
               }
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Atsijungimas ir naudotojų valdymas",
+      "item": [
+        {
+          "name": "Atsijungimas (narys)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Refresh token cookie ištrinamas', () => pm.expect((pm.response.headers.get('Set-Cookie') || '').toLowerCase()).to.include('expires=thu, 01 jan 1970'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout"
+          }
+        },
+        {
+          "name": "Senas access token po atsijungimo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 401 Unauthorized', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/me"
+          }
+        },
+        {
+          "name": "Refresh po atsijungimo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/auth/refresh"
+          }
+        },
+        {
+          "name": "Administratorius keičia nario rolę",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Rolė pakeista į Moderator', () => pm.expect(pm.response.json().role).to.eql('Moderator'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{memberId}}/role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"Moderator\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Administratorius negali pakeisti savo rolės",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{adminId}}/role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"Member\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Administratorius negali ištrinti savęs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 403 Forbidden', () => pm.response.to.have.status(403));",
+                  "pm.test('Turinio tipas JSON', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{adminId}}"
+          }
+        },
+        {
+          "name": "Administratorius ištrina naudotoją",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Atsakymas be turinio', () => pm.expect(pm.response.text()).to.be.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{memberId}}"
+          }
+        },
+        {
+          "name": "Administratorius ištrina antrą testinį naudotoją",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 204 No Content', () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{escalationUserId}}"
+          }
+        },
+        {
+          "name": "Ištrintas naudotojas nerandamas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Statusas 404 Not Found', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/users/{{memberId}}"
           }
         }
       ]

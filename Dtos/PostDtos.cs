@@ -25,11 +25,14 @@ public record PostResponse(
     string Content,
     DateTime CreatedAt,
     int CategoryId,
+    int AuthorId,
+    string AuthorName,
     IReadOnlyList<LinkDto> Links);
 
 public static class PostMappings
 {
     public static PostResponse ToResponse(this Post post, IUrlHelper url) =>
         new(post.Id, post.Title, post.Content, post.CreatedAt, post.CategoryId,
+            post.AuthorId, post.Author.UserName,
             ForumLinks.ForPost(url, post.CategoryId, post.Id));
 }

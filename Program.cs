@@ -1,3 +1,4 @@
+using DndForum.Auth;
 using DndForum.Data;
 using DndForum.Validation;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,8 @@ builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
         options.InvalidModelStateResponseFactory = InvalidModelStateResponse.Create);
 
+builder.Services.AddForumAuth(builder.Configuration);
+
 // Every error response (404 for unknown URLs, unexpected exceptions) is returned as problem+json.
 builder.Services.AddProblemDetails();
 
@@ -22,7 +25,7 @@ builder.Services.AddOpenApi(options =>
     {
         document.Info.Title = "D&D Forum API";
         document.Info.Version = "v1";
-        document.Info.Description = "REST API Dungeons & Dragons forumui: kategorijos, įrašai, komentarai ir forumo panelė.";
+        document.Info.Description = "REST API Dungeons & Dragons forumui: kategorijos, įrašai, komentarai, forumo panelė ir JWT autentifikacija.";
         return Task.CompletedTask;
     }));
 
@@ -34,12 +37,18 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
-app.UseExceptionHandler();
+// In Development the developer exception page shows the real error; elsewhere it is hidden behind problem+json.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler();
+}
+
 app.UseStatusCodePages();
 
 app.MapOpenApi();
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

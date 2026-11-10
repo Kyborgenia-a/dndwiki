@@ -15,6 +15,7 @@ public static class ForumLinks
     private const string Posts = "Posts";
     private const string Comments = "Comments";
     private const string Dashboard = "Dashboard";
+    private const string Auth = "Auth";
 
     public static LinkDto CategorySelf(IUrlHelper url, int categoryId) =>
         Link(url, "self", HttpMethods.Get, Categories, nameof(CategoriesController.GetById), new { categoryId });
@@ -69,6 +70,11 @@ public static class ForumLinks
         Link(url, "categories", HttpMethods.Get, Categories, nameof(CategoriesController.GetAll), new { }),
         Link(url, "create-category", HttpMethods.Post, Categories, nameof(CategoriesController.Create), new { }),
         Link(url, "dashboard", HttpMethods.Get, Dashboard, nameof(DashboardController.Get), new { }),
+        Link(url, "register", HttpMethods.Post, Auth, nameof(AuthController.Register), new { }),
+        Link(url, "login", HttpMethods.Post, Auth, nameof(AuthController.Login), new { }),
+        Link(url, "refresh", HttpMethods.Post, Auth, nameof(AuthController.Refresh), new { }),
+        Link(url, "logout", HttpMethods.Post, Auth, nameof(AuthController.Logout), new { }),
+        Link(url, "me", HttpMethods.Get, Auth, nameof(AuthController.Me), new { }),
         new LinkDto("openapi", "/openapi/v1.json", HttpMethods.Get)
     ];
 

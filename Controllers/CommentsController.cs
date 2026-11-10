@@ -1,8 +1,10 @@
+using DndForum.Auth;
 using DndForum.Data;
 using DndForum.Dtos;
 using DndForum.Hypermedia;
 using DndForum.Models;
 using DndForum.Queries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,14 +16,16 @@ namespace DndForum.Controllers;
 public class CommentsController : ControllerBase
 {
     private readonly ForumDbContext _dbContext;
+    private readonly IAuthorizationService _authorizationService;
 
-    public CommentsController(ForumDbContext dbContext)
+    public CommentsController(ForumDbContext dbContext, IAuthorizationService authorizationService)
     {
         _dbContext = dbContext;
+        _authorizationService = authorizationService;
     }
 
     [EndpointSummary("Gauti įrašo komentarus")]
-    [EndpointDescription("Grąžina įrašo komentarų puslapį chronologine tvarka. Filtras search ieško komentaro tekste. Puslapiavimas: page, pageSize.")]
+    [EndpointDescription("Viešas. Grąžina įrašo komentarų puslapį chronologine tvarka. Filtras search ieško komentaro tekste. Puslapiavimas: page, pageSize.")]
     [HttpGet]
     [ProducesResponseType(typeof(PagedResponse<CommentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -46,6 +50,7 @@ public class CommentsController : ControllerBase
 
         var totalCount = await comments.CountAsync();
         var pageItems = await comments
+            .Include(comment => comment.Author)
             .OrderBy(comment => comment.CreatedAt)
             .ThenBy(comment => comment.Id)
             .Skip(query.ItemsToSkip())
@@ -57,7 +62,7 @@ public class CommentsController : ControllerBase
     }
 
     [EndpointSummary("Gauti komentarą")]
-    [EndpointDescription("Grąžina vieną komentarą. Komentaras turi priklausyti nurodytam įrašui ir kategorijai, kitaip grąžinamas 404.")]
+    [EndpointDescription("Viešas. Grąžina vieną komentarą. Komentaras turi priklausyti nurodytam įrašui ir kategorijai, kitaip grąžinamas 404.")]
     [HttpGet("{commentId:int}")]
     [ProducesResponseType(typeof(CommentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -73,10 +78,12 @@ public class CommentsController : ControllerBase
     }
 
     [EndpointSummary("Sukurti komentarą")]
-    [EndpointDescription("Prideda naują komentarą prie įrašo. Sukūrimo laiką nustato serveris.")]
+    [EndpointDescription("Prisijungusiam naudotojui. Prideda komentarą prie įrašo. Autorius ir sukūrimo laikas nustatomi serveryje pagal access token.")]
+    [Authorize]
     [HttpPost]
     [ProducesResponseType(typeof(CommentResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     public async Task<ActionResult<CommentResponse>> Create(int categoryId, int postId, CommentRequest request)
@@ -90,10 +97,12 @@ public class CommentsController : ControllerBase
         {
             Content = request.Content,
             CreatedAt = DateTime.UtcNow,
-            PostId = postId
+            PostId = postId,
+            AuthorId = User.GetUserId()
         };
         _dbContext.Comments.Add(comment);
         await _dbContext.SaveChangesAsync();
+        await _dbContext.Entry(comment).Reference(c => c.Author).LoadAsync();
 
         return CreatedAtAction(
             nameof(GetById),
@@ -102,10 +111,13 @@ public class CommentsController : ControllerBase
     }
 
     [EndpointSummary("Atnaujinti komentarą")]
-    [EndpointDescription("Pakeičia komentaro turinį.")]
+    [EndpointDescription("Komentaro autoriui, moderatoriui arba administratoriui. Kitiems naudotojams grąžinamas 403.")]
+    [Authorize]
     [HttpPut("{commentId:int}")]
     [ProducesResponseType(typeof(CommentResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     public async Task<ActionResult<CommentResponse>> Update(
@@ -117,6 +129,11 @@ public class CommentsController : ControllerBase
             return NotFound();
         }
 
+        if (!await CanModifyAsync(comment))
+        {
+            return Forbid();
+        }
+
         comment.Content = request.Content;
         await _dbContext.SaveChangesAsync();
 
@@ -124,9 +141,12 @@ public class CommentsController : ControllerBase
     }
 
     [EndpointSummary("Ištrinti komentarą")]
-    [EndpointDescription("Ištrina komentarą.")]
+    [EndpointDescription("Komentaro autoriui, moderatoriui arba administratoriui.")]
+    [Authorize]
     [HttpDelete("{commentId:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(int categoryId, int postId, int commentId)
     {
@@ -134,6 +154,11 @@ public class CommentsController : ControllerBase
         if (comment is null)
         {
             return NotFound();
+        }
+
+        if (!await CanModifyAsync(comment))
+        {
+            return Forbid();
         }
 
         _dbContext.Comments.Remove(comment);
@@ -146,8 +171,13 @@ public class CommentsController : ControllerBase
         _dbContext.Posts.AnyAsync(post => post.Id == postId && post.CategoryId == categoryId);
 
     private Task<Comment?> FindCommentAsync(int categoryId, int postId, int commentId) =>
-        _dbContext.Comments.FirstOrDefaultAsync(comment =>
-            comment.Id == commentId &&
-            comment.PostId == postId &&
-            comment.Post.CategoryId == categoryId);
+        _dbContext.Comments
+            .Include(comment => comment.Author)
+            .FirstOrDefaultAsync(comment =>
+                comment.Id == commentId &&
+                comment.PostId == postId &&
+                comment.Post.CategoryId == categoryId);
+
+    private async Task<bool> CanModifyAsync(Comment comment) =>
+        (await _authorizationService.AuthorizeAsync(User, comment, Policies.AuthorOrModerator)).Succeeded;
 }
