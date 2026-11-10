@@ -31,6 +31,9 @@ namespace saitynoi.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -52,26 +55,37 @@ namespace saitynoi.Migrations
                         new
                         {
                             Id = 1,
+                            CreatedAt = new DateTime(2026, 8, 20, 9, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Žaidėjų klasių aprašymai, subklasės ir patarimai, kaip jas žaisti.",
                             Name = "Klasės"
                         },
                         new
                         {
                             Id = 2,
+                            CreatedAt = new DateTime(2026, 8, 20, 9, 5, 0, 0, DateTimeKind.Utc),
                             Description = "Žaidžiamų rasių savybės, istorija ir vaidmens patarimai.",
                             Name = "Rasės"
                         },
                         new
                         {
                             Id = 3,
+                            CreatedAt = new DateTime(2026, 8, 21, 14, 30, 0, 0, DateTimeKind.Utc),
                             Description = "Vartotojų sukurti burtai, magiški daiktai, monstrai ir nuotykiai.",
                             Name = "Homebrew kūryba"
                         },
                         new
                         {
                             Id = 4,
+                            CreatedAt = new DateTime(2026, 8, 22, 18, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Patarimai žaidimų vedėjams: sesijų planavimas, improvizacija ir balansas.",
                             Name = "DM patarimai"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CreatedAt = new DateTime(2026, 8, 25, 11, 15, 0, 0, DateTimeKind.Utc),
+                            Description = "Burtų aprašymai, jų derinimas ir taisyklių paaiškinimai.",
+                            Name = "Burtai"
                         });
                 });
 
@@ -142,6 +156,69 @@ namespace saitynoi.Migrations
                             Content = "Mes pridedame priešų bangomis, ir kovos vėl tampa įdomios.",
                             CreatedAt = new DateTime(2026, 9, 13, 21, 30, 0, 0, DateTimeKind.Utc),
                             PostId = 5
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Content = "Find Familiar pelėda dar gali duoti Help veiksmą ir nusiskristi neišprovokuodama atakos.",
+                            CreatedAt = new DateTime(2026, 9, 5, 10, 15, 0, 0, DateTimeKind.Utc),
+                            PostId = 2
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Content = "Mano tiefling warlock su Hellish Rebuke jau ne kartą nustebino DM.",
+                            CreatedAt = new DateTime(2026, 9, 6, 17, 45, 0, 0, DateTimeKind.Utc),
+                            PostId = 3
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Content = "Mountain dwarf gauna vidutinių šarvų įgūdį, todėl tinka net wizard klasei.",
+                            CreatedAt = new DateTime(2026, 9, 16, 11, 0, 0, 0, DateTimeKind.Utc),
+                            PostId = 6
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Content = "Išbandėme vakar: rūkas tikrai pakeitė kovos taktiką, labai patiko.",
+                            CreatedAt = new DateTime(2026, 9, 20, 22, 5, 0, 0, DateTimeKind.Utc),
+                            PostId = 7
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Content = "Siūlyčiau gyvatėms sumažinti gyvybes, kitaip kova užsitęsia.",
+                            CreatedAt = new DateTime(2026, 9, 21, 8, 30, 0, 0, DateTimeKind.Utc),
+                            PostId = 7
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Content = "Socialinis susitikimas taverne – klasika, kuri visada veikia.",
+                            CreatedAt = new DateTime(2026, 9, 23, 13, 50, 0, 0, DateTimeKind.Utc),
+                            PostId = 8
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Content = "Prieš kiekvieną Fireball klausiu grupės, ar visi stovi už spindulio ribų.",
+                            CreatedAt = new DateTime(2026, 9, 26, 9, 25, 0, 0, DateTimeKind.Utc),
+                            PostId = 9
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Content = "Verta paminėti, kad aukštesnio lygio vieta prideda po 1d6 žalos.",
+                            CreatedAt = new DateTime(2026, 9, 27, 15, 0, 0, 0, DateTimeKind.Utc),
+                            PostId = 9
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Content = "War Caster feat labai padeda išlaikyti koncentraciją kovoje.",
+                            CreatedAt = new DateTime(2026, 9, 29, 18, 35, 0, 0, DateTimeKind.Utc),
+                            PostId = 10
                         });
                 });
 
@@ -215,6 +292,46 @@ namespace saitynoi.Migrations
                             Content = "Jei grupė lengvai įveikia kovas, didinkite ne priešų gyvybes, o jų skaičių ir taktiką. Naudokite aplinką, laiko spaudimą ir tikslus, kurie nėra vien priešų nugalėjimas.",
                             CreatedAt = new DateTime(2026, 9, 12, 9, 45, 0, 0, DateTimeKind.Utc),
                             Title = "Kaip suvaldyti per stiprią žaidėjų grupę"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CategoryId = 2,
+                            Content = "Nykštukai mato tamsoje (Darkvision), yra atsparūs nuodams ir puikiai išmano akmens darbus. Dėl tvirtumo jie natūraliai tinka Fighter, Cleric ir Paladin klasėms.",
+                            CreatedAt = new DateTime(2026, 9, 15, 16, 20, 0, 0, DateTimeKind.Utc),
+                            Title = "Nykštukai (Dwarf): atsparumas ir tradicijos"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CategoryId = 3,
+                            Content = "Challenge Rating 4 priešininkė, gyvenanti pelkėse. Ji gali sukurti rūką, kuris riboja matomumą, ir prisikviesti dvi pelkių gyvates. Tinka 3–4 lygio grupei kaip sesijos finalas.",
+                            CreatedAt = new DateTime(2026, 9, 18, 21, 10, 0, 0, DateTimeKind.Utc),
+                            Title = "Homebrew monstras: Pelkių ragana"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CategoryId = 4,
+                            Content = "Užtenka trijų dalykų: aiškaus nuotykio kabliuko, vienos kovos ir vieno socialinio susitikimo. Nerašykite viso scenarijaus – leiskite žaidėjų sprendimams nulemti eigą.",
+                            CreatedAt = new DateTime(2026, 9, 22, 8, 0, 0, 0, DateTimeKind.Utc),
+                            Title = "Kaip pasiruošti pirmajai sesijai per valandą"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CategoryId = 5,
+                            Content = "Fireball yra 3 lygio burtas, darantis 8d6 ugnies žalos 20 pėdų spinduliu. Jis puikus prieš priešų grupes, bet uždarose patalpose lengva užkabinti ir savo sąjungininkus.",
+                            CreatedAt = new DateTime(2026, 9, 25, 19, 40, 0, 0, DateTimeKind.Utc),
+                            Title = "Fireball: kada verta, o kada ne"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            CategoryId = 5,
+                            Content = "Vienu metu galima palaikyti tik vieną Concentration burtą. Gavęs žalos, burtininkas meta Constitution gelbėjimo metimą: sudėtingumas yra 10 arba pusė gautos žalos, jei ji didesnė.",
+                            CreatedAt = new DateTime(2026, 9, 28, 12, 5, 0, 0, DateTimeKind.Utc),
+                            Title = "Concentration taisyklė paprastai"
                         });
                 });
 

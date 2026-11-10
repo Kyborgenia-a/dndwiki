@@ -1,6 +1,8 @@
 using DndForum.Data;
 using DndForum.Dtos;
+using DndForum.Hypermedia;
 using DndForum.Models;
+using DndForum.Queries;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,24 +21,48 @@ public class PostsController : ControllerBase
     }
 
     [EndpointSummary("Gauti kategorijos įrašus")]
-    [EndpointDescription("Grąžina visus nurodytos kategorijos įrašus, naujausius pirmiau.")]
+    [EndpointDescription("Grąžina kategorijos įrašų puslapį, naujausius pirmiau. Filtrai: search (pavadinime ir turinyje), createdFrom ir createdTo (sukūrimo laiko intervalas imtinai). Puslapiavimas: page, pageSize.")]
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<PostResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResponse<PostResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<PostResponse>>> GetAll(int categoryId)
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult<PagedResponse<PostResponse>>> GetAll(int categoryId, [FromQuery] PostQuery query)
     {
         if (!await CategoryExistsAsync(categoryId))
         {
             return NotFound();
         }
 
-        var posts = await _dbContext.Posts
+        var posts = _dbContext.Posts
             .AsNoTracking()
-            .Where(post => post.CategoryId == categoryId)
+            .Where(post => post.CategoryId == categoryId);
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim();
+            posts = posts.Where(post => post.Title.Contains(search) || post.Content.Contains(search));
+        }
+
+        if (query.CreatedFrom is { } createdFrom)
+        {
+            posts = posts.Where(post => post.CreatedAt >= createdFrom);
+        }
+
+        if (query.CreatedTo is { } createdTo)
+        {
+            posts = posts.Where(post => post.CreatedAt <= createdTo);
+        }
+
+        var totalCount = await posts.CountAsync();
+        var pageItems = await posts
             .OrderByDescending(post => post.CreatedAt)
+            .ThenByDescending(post => post.Id)
+            .Skip(query.ItemsToSkip())
+            .Take(query.PageSize)
             .ToListAsync();
 
-        return Ok(posts.Select(post => post.ToResponse()));
+        var responses = pageItems.Select(post => post.ToResponse(Url)).ToList();
+        return Ok(ForumLinks.ToPage(Url, nameof(GetAll), new { categoryId }, query, totalCount, responses));
     }
 
     [EndpointSummary("Gauti įrašą")]
@@ -52,7 +78,7 @@ public class PostsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(post.ToResponse());
+        return Ok(post.ToResponse(Url));
     }
 
     [EndpointSummary("Sukurti įrašą")]
@@ -79,7 +105,7 @@ public class PostsController : ControllerBase
         _dbContext.Posts.Add(post);
         await _dbContext.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { categoryId, postId = post.Id }, post.ToResponse());
+        return CreatedAtAction(nameof(GetById), new { categoryId, postId = post.Id }, post.ToResponse(Url));
     }
 
     [EndpointSummary("Atnaujinti įrašą")]
@@ -101,7 +127,7 @@ public class PostsController : ControllerBase
         post.Content = request.Content;
         await _dbContext.SaveChangesAsync();
 
-        return Ok(post.ToResponse());
+        return Ok(post.ToResponse(Url));
     }
 
     [EndpointSummary("Ištrinti įrašą")]

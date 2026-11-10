@@ -1,32 +1,46 @@
-using Microsoft.EntityFrameworkCore;
 using DndForum.Data;
 using DndForum.Validation;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var connectionString = builder.Configuration.GetConnectionString("ForumDatabase");
+// Įrašyk savo MySQL versiją (SELECT VERSION();), pvz. 8.4.2 → new Version(8, 4, 2).
+var mySqlVersion = new MySqlServerVersion(new Version(8, 0, 36));
+builder.Services.AddDbContext<ForumDbContext>(options =>
+    options.UseMySql(connectionString, mySqlVersion));
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
         options.InvalidModelStateResponseFactory = InvalidModelStateResponse.Create);
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 
-var connectionString = builder.Configuration.GetConnectionString("ForumDatabase");
-builder.Services.AddDbContext<ForumDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+// Every error response (404 for unknown URLs, unexpected exceptions) is returned as problem+json.
+builder.Services.AddProblemDetails();
+
+builder.Services.AddOpenApi(options =>
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Info.Title = "D&D Forum API";
+        document.Info.Version = "v1";
+        document.Info.Description = "REST API Dungeons & Dragons forumui: kategorijos, įrašai, komentarai ir forumo panelė.";
+        return Task.CompletedTask;
+    }));
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.MapOpenApi();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ForumDbContext>();
+    dbContext.Database.Migrate();
 }
 
+app.UseExceptionHandler();
+app.UseStatusCodePages();
+
+app.MapOpenApi();
+
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

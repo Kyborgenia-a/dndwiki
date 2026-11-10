@@ -1,6 +1,8 @@
 using DndForum.Data;
 using DndForum.Dtos;
+using DndForum.Hypermedia;
 using DndForum.Models;
+using DndForum.Queries;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,24 +21,39 @@ public class CommentsController : ControllerBase
     }
 
     [EndpointSummary("Gauti įrašo komentarus")]
-    [EndpointDescription("Grąžina visus įrašo komentarus chronologine tvarka.")]
+    [EndpointDescription("Grąžina įrašo komentarų puslapį chronologine tvarka. Filtras search ieško komentaro tekste. Puslapiavimas: page, pageSize.")]
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<CommentResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResponse<CommentResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<IEnumerable<CommentResponse>>> GetAll(int categoryId, int postId)
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult<PagedResponse<CommentResponse>>> GetAll(
+        int categoryId, int postId, [FromQuery] CommentQuery query)
     {
         if (!await PostExistsAsync(categoryId, postId))
         {
             return NotFound();
         }
 
-        var comments = await _dbContext.Comments
+        var comments = _dbContext.Comments
             .AsNoTracking()
-            .Where(comment => comment.PostId == postId)
+            .Where(comment => comment.PostId == postId);
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim();
+            comments = comments.Where(comment => comment.Content.Contains(search));
+        }
+
+        var totalCount = await comments.CountAsync();
+        var pageItems = await comments
             .OrderBy(comment => comment.CreatedAt)
+            .ThenBy(comment => comment.Id)
+            .Skip(query.ItemsToSkip())
+            .Take(query.PageSize)
             .ToListAsync();
 
-        return Ok(comments.Select(comment => comment.ToResponse()));
+        var responses = pageItems.Select(comment => comment.ToResponse(categoryId, Url)).ToList();
+        return Ok(ForumLinks.ToPage(Url, nameof(GetAll), new { categoryId, postId }, query, totalCount, responses));
     }
 
     [EndpointSummary("Gauti komentarą")]
@@ -52,7 +69,7 @@ public class CommentsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(comment.ToResponse());
+        return Ok(comment.ToResponse(categoryId, Url));
     }
 
     [EndpointSummary("Sukurti komentarą")]
@@ -81,7 +98,7 @@ public class CommentsController : ControllerBase
         return CreatedAtAction(
             nameof(GetById),
             new { categoryId, postId, commentId = comment.Id },
-            comment.ToResponse());
+            comment.ToResponse(categoryId, Url));
     }
 
     [EndpointSummary("Atnaujinti komentarą")]
@@ -103,7 +120,7 @@ public class CommentsController : ControllerBase
         comment.Content = request.Content;
         await _dbContext.SaveChangesAsync();
 
-        return Ok(comment.ToResponse());
+        return Ok(comment.ToResponse(categoryId, Url));
     }
 
     [EndpointSummary("Ištrinti komentarą")]

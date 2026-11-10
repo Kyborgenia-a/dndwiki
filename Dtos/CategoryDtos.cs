@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using DndForum.Hypermedia;
 using DndForum.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace DndForum.Dtos;
 
@@ -9,16 +11,22 @@ public class CategoryRequest
 
     [Required]
     [StringLength(Category.NameMaxLength, MinimumLength = NameMinLength)]
-    public string Name { get; init; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 
     [StringLength(Category.DescriptionMaxLength)]
-    public string Description { get; init; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }
 
-public record CategoryResponse(int Id, string Name, string Description);
+public record CategoryResponse(
+    int Id,
+    string Name,
+    string Description,
+    DateTime CreatedAt,
+    IReadOnlyList<LinkDto> Links);
 
 public static class CategoryMappings
 {
-    public static CategoryResponse ToResponse(this Category category) =>
-        new(category.Id, category.Name, category.Description);
+    public static CategoryResponse ToResponse(this Category category, IUrlHelper url) =>
+        new(category.Id, category.Name, category.Description, category.CreatedAt,
+            ForumLinks.ForCategory(url, category.Id));
 }

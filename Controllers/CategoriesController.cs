@@ -1,6 +1,8 @@
 using DndForum.Data;
 using DndForum.Dtos;
+using DndForum.Hypermedia;
 using DndForum.Models;
+using DndForum.Queries;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,22 +20,35 @@ public class CategoriesController : ControllerBase
         _dbContext = dbContext;
     }
 
-    [EndpointSummary("Gauti visas kategorijas")]
-    [EndpointDescription("Grąžina visų forumo kategorijų sąrašą, surikiuotą pagal ID.")]
+    [EndpointSummary("Gauti kategorijų sąrašą")]
+    [EndpointDescription("Grąžina kategorijų puslapį. Filtras search ieško pavadinime ir aprašyme. Puslapiavimas: page (nuo 1), pageSize (1–50).")]
     [HttpGet]
-    [ProducesResponseType(typeof(IEnumerable<CategoryResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<CategoryResponse>>> GetAll()
+    [ProducesResponseType(typeof(PagedResponse<CategoryResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult<PagedResponse<CategoryResponse>>> GetAll([FromQuery] CategoryQuery query)
     {
-        var categories = await _dbContext.Categories
-            .AsNoTracking()
+        var categories = _dbContext.Categories.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim();
+            categories = categories.Where(category =>
+                category.Name.Contains(search) || category.Description.Contains(search));
+        }
+
+        var totalCount = await categories.CountAsync();
+        var pageItems = await categories
             .OrderBy(category => category.Id)
+            .Skip(query.ItemsToSkip())
+            .Take(query.PageSize)
             .ToListAsync();
 
-        return Ok(categories.Select(category => category.ToResponse()));
+        var responses = pageItems.Select(category => category.ToResponse(Url)).ToList();
+        return Ok(ForumLinks.ToPage(Url, nameof(GetAll), new { }, query, totalCount, responses));
     }
 
     [EndpointSummary("Gauti kategoriją")]
-    [EndpointDescription("Grąžina vieną kategoriją pagal ID.")]
+    [EndpointDescription("Grąžina vieną kategoriją pagal ID kartu su nuorodomis į jos įrašus ir galimus veiksmus.")]
     [HttpGet("{categoryId:int}")]
     [ProducesResponseType(typeof(CategoryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -45,7 +60,7 @@ public class CategoriesController : ControllerBase
             return NotFound();
         }
 
-        return Ok(category.ToResponse());
+        return Ok(category.ToResponse(Url));
     }
 
     [EndpointSummary("Sukurti kategoriją")]
@@ -62,11 +77,16 @@ public class CategoriesController : ControllerBase
             return CategoryNameConflict(request.Name);
         }
 
-        var category = new Category { Name = request.Name, Description = request.Description };
+        var category = new Category
+        {
+            Name = request.Name,
+            Description = request.Description,
+            CreatedAt = DateTime.UtcNow
+        };
         _dbContext.Categories.Add(category);
         await _dbContext.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { categoryId = category.Id }, category.ToResponse());
+        return CreatedAtAction(nameof(GetById), new { categoryId = category.Id }, category.ToResponse(Url));
     }
 
     [EndpointSummary("Atnaujinti kategoriją")]
@@ -94,7 +114,7 @@ public class CategoriesController : ControllerBase
         category.Description = request.Description;
         await _dbContext.SaveChangesAsync();
 
-        return Ok(category.ToResponse());
+        return Ok(category.ToResponse(Url));
     }
 
     [EndpointSummary("Ištrinti kategoriją")]
